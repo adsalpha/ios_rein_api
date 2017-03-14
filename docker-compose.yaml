@@ -1,0 +1,46 @@
+version: '2'
+services:
+  nginx:
+    build: $PWD/nginx
+    volumes:
+     - $PWD/nginx/sites:/etc/nginx/sites-available
+     - $PWD/nginx/sites:/etc/nginx/sites-enabled
+     - $PWD/nginx/init:/init
+     - $PWD/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+     - $PWD/nginx/ssl:/ssl
+     - socket:/tmp
+    ports:
+     - "8080:80"
+    depends_on:
+     - engine
+    entrypoint:
+     - /bin/sh
+     - -c
+     - /init/init.sh
+    environment:
+     - URL=api.reinproject.org
+  engine:
+    build: $PWD/app
+    volumes:
+     - $PWD/app:/app
+     - socket:/tmp
+    depends_on:
+     - mongo
+    entrypoint:
+     - uwsgi
+     - --ini
+     - /app/conf/api.reinproject.org.ini
+    environment:
+     - PYTHONPATH=/app
+  mongo:
+    build: $PWD/mongo
+    volumes:
+     - socket:/tmp
+     - $PWD/mongo/conf:/app
+     - $PWD/mongo/data:/mongo/db
+    entrypoint:
+     - mongod
+     - --config
+     - /app/mongod.conf
+volumes:
+  socket:

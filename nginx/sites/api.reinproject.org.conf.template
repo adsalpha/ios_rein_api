@@ -1,0 +1,19 @@
+server {
+    listen 443 ssl;
+    server_name ${URL};
+
+    ssl_certificate /ssl/fullchain.pem;
+    ssl_certificate_key /ssl/privkey.pem;
+
+    location / {
+        include uwsgi_params;
+        uwsgi_pass unix:/tmp/api.reinproject.org.sock;
+        uwsgi_read_timeout 60;
+    }
+}
+
+server {
+    listen 80;
+    server_name ${URL};
+    return 301 https://${DOLLAR}server_name${DOLLAR}request_uri;
+}
