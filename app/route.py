@@ -2,6 +2,7 @@
 from flask import Flask, request
 from pymongo import MongoClient
 from utils import *
+import json
 
 application = Flask(__name__)
 
@@ -28,7 +29,8 @@ def get_all_jobs():
 
     # Check if dirty_jobs is up to date. If not, insert.
     for url in urls:
-        server_dirty_jobs = requests.get(urls[url].format(owner, query, testnet)).text
+        server_text = requests.get(urls[url].format(owner, query, testnet)).text
+        server_dirty_jobs = json.loads(server_text)["jobs"]
         db_dirty_jobs = dirty_jobs_collection.find_one({"region": url}, {"_id": False})
         if not db_dirty_jobs:
             dirty_jobs_collection.insert_one({"contents": server_dirty_jobs, "region": url})
@@ -42,7 +44,7 @@ def get_all_jobs():
         jobs_to_return_collection.drop()
         db_dirty_jobs = dirty_jobs_collection.find({}, {"_id": False})
         for dirty_jobs in db_dirty_jobs:
-            jobs += filter_and_parse_valid_sigs(json.loads(dirty_jobs["contents"])['jobs'])
+            jobs += filter_and_parse_valid_sigs(dirty_jobs["contents"])
         unique_jobs = unique(get_live_jobs(jobs), "Job ID")
         for job in unique_jobs:
             jobs_to_return_collection.insert(job)
