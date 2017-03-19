@@ -20,7 +20,7 @@ def get_modified_job(job, expiration_time):
     job["tags"] = job.pop("Tags")
     job["details"] = re.search(r"(?<=Description: ).*?(?=\nBlock hash:)", job["original"], re.DOTALL).group()
     job["expiresAt"] = expiration_time
-    job["creator"] = job.pop("Job Creator")
+    job["creator"] = job.pop("Job creator")
     job["creatorContact"] = job.pop("Job creator contact")
     job["mediator"] = job.pop("Mediator")
     job["mediatorContact"] = job.pop("Mediator contact")
