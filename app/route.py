@@ -3,6 +3,7 @@ from flask import Flask, request
 from pymongo import MongoClient
 from utils import *
 import json
+import time
 
 application = Flask(__name__)
 
@@ -39,17 +40,21 @@ def get_all_jobs():
         else:
             jobs_to_return_up_to_date += 1
 
-    # Update jobs_to_return if necessary.
+    # Update jobs_to_return.
     if jobs_to_return_up_to_date < len(urls):
         jobs_to_return_collection.drop()
         db_dirty_jobs = dirty_jobs_collection.find({}, {"_id": False})
         for dirty_jobs in db_dirty_jobs:
             jobs += filter_and_parse_valid_sigs(dirty_jobs["contents"])
-        unique_jobs = unique(get_live_jobs(jobs), "Job ID")
+        unique_jobs = unique(get_live_jobs(jobs), "_id")
         for job in unique_jobs:
             jobs_to_return_collection.insert(job)
+    else:
+        for job in jobs_to_return_collection.find():
+            if job["expiresAt"] < time.time():
+                jobs_to_return_collection.delete_one(job)
 
-    jobs_to_return = [job for job in jobs_to_return_collection.find({}, {"_id": False})]
+    jobs_to_return = [job for job in jobs_to_return_collection.find()]
     return json.dumps({"result": "success", "jobs": jobs_to_return})
 
 if __name__ == "__main__":

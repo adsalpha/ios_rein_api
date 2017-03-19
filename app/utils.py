@@ -8,15 +8,22 @@ import re, requests, json, time
 from bitcoin.signmessage import BitcoinMessage, VerifyMessage
 
 SECONDS_IN_A_DAY = 86400
-FIELDS_TO_RETURN = {"Job name", "Job ID", "Tags", "Description", "Expires at", "Job creator",
-                    "Job creator contact", "Mediator", "Mediator contact"}
+FIELDS_TO_RETURN = {"name", "_id", "tags", "details", "expiresAt", "creator",
+                    "creatorContact", "mediator", "mediatorContact"}
 
 def compute_expiration_time(time_created, lifetime_in_days):
     return time_created + lifetime_in_days * SECONDS_IN_A_DAY
 
 def get_modified_job(job, expiration_time):
-    job["Expires at"] = expiration_time
-    job["Description"] = re.search(r"(?<=Description: ).*?(?=\nBlock hash:)", job["original"], re.DOTALL).group()
+    job["name"] = job.pop("Job name")
+    job["_id"] = job.pop("Job ID")
+    job["tags"] = job.pop("Tags")
+    job["details"] = re.search(r"(?<=Description: ).*?(?=\nBlock hash:)", job["original"], re.DOTALL).group()
+    job["expiresAt"] = expiration_time
+    job["creator"] = job.pop("Job Creator")
+    job["creatorContact"] = job.pop("Job creator contact")
+    job["mediator"] = job.pop("Mediator")
+    job["mediatorContact"] = job.pop("Mediator contact")
     modified_job = {}
     for key in job:
         if key in FIELDS_TO_RETURN:
